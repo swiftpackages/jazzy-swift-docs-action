@@ -27,15 +27,17 @@ const generateJazzyInstallCommand = () => {
 }
 
 const generateJazzyArguments = () => {
-  if (configFilePath) {
-    return `jazzy --config ${configFilePath}`
-  }
+  var command = `jazzy`
 
   if (jazzyArgs) {
-    return `jazzy ${jazzyArgs}`
+    command += ` ${jazzyArgs}`
   }
 
-  return "jazzy"
+  if (configFilePath) {
+    command += ` --config ${configFilePath}`
+  }
+
+  return command
 }
 
 const sliceDocumentsFromJazzyArgs = (outputArg) => {
@@ -94,7 +96,7 @@ const generateAndDeploy = () => {
   shell.exec("git add .")
   shell.exec("git commit -m 'Deploying Updated Jazzy Docs'")
   shell.exec(`git push --force ${remote} master:${branch}`)
-  
+
   shell.cd(process.env.GITHUB_WORKSPACE)
 }
 
@@ -103,4 +105,3 @@ try {
 } catch (error) {
   core.setFailed(error.message)
 }
-

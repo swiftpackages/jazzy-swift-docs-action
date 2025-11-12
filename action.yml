@@ -20,7 +20,7 @@ inputs:
     description: "Personal access token"
     required: true
 runs:
-  using: "node12"
+  using: "node20"
   main: "dist/index.js"
 branding:
   icon: "book"

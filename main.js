@@ -8,25 +8,7 @@ const context = github.context
 
 shell.config.fatal = true
 
-// User defined input
-var branch = core.getInput("branch")
-var history = core.getInput("history")
-const jazzyVersion = core.getInput("version")
-const configFilePath = core.getInput("config")
-const jazzyArgs = core.getInput("args")
-const token = core.getInput("personal_access_token")
-
-if (branch == '' || branch == null || branch == undefined) {
-    branch = "gh-pages"
-}
-
-if (history == '' || history == null || history == undefined) {
-    history = true
-}
-
-const remote = `https://${token}@github.com/${context.repo.owner}/${context.repo.repo}.git`
-
-const generateJazzyInstallCommand = () => {
+const generateJazzyInstallCommand = (jazzyVersion) => {
   let gemInstall = "sudo gem install jazzy"
 
   if (jazzyVersion) {
@@ -36,7 +18,7 @@ const generateJazzyInstallCommand = () => {
   return gemInstall
 }
 
-const generateJazzyArguments = () => {
+const generateJazzyArguments = (jazzyArgs, configFilePath) => {
   let command = `jazzy`
 
   if (jazzyArgs) {
@@ -50,7 +32,7 @@ const generateJazzyArguments = () => {
   return command
 }
 
-const sliceDocumentsFromJazzyArgs = (outputArg) => {
+const sliceDocumentsFromJazzyArgs = (jazzyArgs, outputArg) => {
   const startIndexOfDocsDir = jazzyArgs.indexOf(outputArg) + outputArg.length + 1
   const endIndexOfDocsDir = jazzyArgs.indexOf(" ", startIndexOfDocsDir)
 
@@ -61,15 +43,15 @@ const sliceDocumentsFromJazzyArgs = (outputArg) => {
   }
 }
 
-const getDocumentationFolder = () => {
+const getDocumentationFolder = (jazzyArgs, configFilePath) => {
   if (jazzyArgs) {
     // --output needs to be checked first, because --output includes -o
     if (jazzyArgs.includes("--output")) {
-      return sliceDocumentsFromJazzyArgs("--output")
+      return sliceDocumentsFromJazzyArgs(jazzyArgs, "--output")
     }
 
     if (jazzyArgs.includes("-o")) {
-      return sliceDocumentsFromJazzyArgs("-o")
+      return sliceDocumentsFromJazzyArgs(jazzyArgs, "-o")
     }
   }
 
@@ -78,7 +60,7 @@ const getDocumentationFolder = () => {
     const fileExt = configFilePath.split(".").pop().toLowerCase()
 
     if (fileExt === "yml" || fileExt === "yaml") {
-      config = yaml.safeLoad(fs.readFileSync(configFilePath, "utf8"))
+      config = yaml.load(fs.readFileSync(configFilePath, "utf8"))
     } else if (fileExt === "json") {
       const rawData = fs.readFileSync(configFilePath)
       config = JSON.parse(rawData)
@@ -92,10 +74,12 @@ const getDocumentationFolder = () => {
   return "docs"
 }
 
-const generateAndDeploy = () => {
-  shell.exec(generateJazzyInstallCommand())
-  shell.exec(generateJazzyArguments())
-  var folder = getDocumentationFolder()
+const generateAndDeploy = (branch, history, jazzyVersion, configFilePath, jazzyArgs, token) => {
+  const remote = `https://${token}@github.com/${context.repo.owner}/${context.repo.repo}.git`
+  
+  shell.exec(generateJazzyInstallCommand(jazzyVersion))
+  shell.exec(generateJazzyArguments(jazzyArgs, configFilePath))
+  var folder = getDocumentationFolder(jazzyArgs, configFilePath)
   if (folder.charAt(folder.length - 1) != '/') {
       folder += '/'
   }
@@ -128,8 +112,39 @@ const generateAndDeploy = () => {
   shell.cd(process.env.GITHUB_WORKSPACE)
 }
 
-try {
-  generateAndDeploy()
-} catch (error) {
-  core.setFailed(error.message)
+const run = () => {
+  // User defined input
+  var branch = core.getInput("branch")
+  var history = core.getInput("history")
+  const jazzyVersion = core.getInput("version")
+  const configFilePath = core.getInput("config")
+  const jazzyArgs = core.getInput("args")
+  const token = core.getInput("personal_access_token")
+
+  if (branch == '' || branch == null || branch == undefined) {
+      branch = "gh-pages"
+  }
+
+  if (history == '' || history == null || history == undefined) {
+      history = true
+  }
+
+  generateAndDeploy(branch, history, jazzyVersion, configFilePath, jazzyArgs, token)
+}
+
+// Only run if this is the main module
+if (require.main === module) {
+  try {
+    run()
+  } catch (error) {
+    core.setFailed(error.message)
+  }
+}
+
+module.exports = {
+  generateJazzyInstallCommand,
+  generateJazzyArguments,
+  sliceDocumentsFromJazzyArgs,
+  getDocumentationFolder,
+  run
 }

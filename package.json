@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "build": "npx @vercel/ncc build main.js --license license.txt"
   },
   "repository": {
@@ -19,12 +19,15 @@
   },
   "homepage": "https://github.com/Steven0351/publish-jazzy-docs#readme",
   "dependencies": {
-    "@actions/core": "^1.2.0",
-    "@actions/exec": "^1.0.1",
-    "@actions/github": "^1.1.0",
-    "@actions/io": "^1.0.1",
-    "js-yaml": "^3.13.1",
-    "rimraf": "^3.0.0",
-    "shelljs": "^0.8.3"
+    "@actions/core": "^1.11.1",
+    "@actions/exec": "^1.1.1",
+    "@actions/github": "^6.0.1",
+    "@actions/io": "^2.0.0",
+    "js-yaml": "^4.1.1",
+    "rimraf": "^6.1.0",
+    "shelljs": "^0.10.0"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0"
   }
 }
